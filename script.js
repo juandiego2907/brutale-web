@@ -604,7 +604,6 @@ burger.addEventListener("click", () => {
 });
 $$("a", nav).forEach((a) => a.addEventListener("click", closeNav));
 
-$$(".js-whatsapp").forEach((a) => (a.href = waLink()));
 $$(".js-phone").forEach((el) => (el.textContent = `+${WHATSAPP}`));
 $("#year").textContent = new Date().getFullYear();
 
