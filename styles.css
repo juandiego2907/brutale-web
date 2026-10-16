@@ -607,6 +607,8 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2
 }
 .footer__bottom p { margin: 0; }
 .to-top:hover { color: var(--white); }
+.credit a { font-weight: 800; letter-spacing: 0.12em; color: var(--text); transition: color 0.2s; }
+.credit a:hover { color: var(--gold); }
 
 /* =========================================================
    CART DRAWER + TOAST
