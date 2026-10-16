@@ -157,19 +157,73 @@ grid.addEventListener("click", (e) => {
 
   const addBtn = e.target.closest(".add");
   if (addBtn) {
-    let size = null, price = item.price;
     if (item.prices) {
       const k = +$(".size[aria-pressed='true']", card).dataset.size;
-      size = SIZES[k].label;
-      price = item.prices[k];
+      return openExtras(item, k, addBtn);
     }
-    addToCart(item.name, size, price);
-    addBtn.classList.add("is-added");
-    addBtn.innerHTML = "✓ Añadida";
-    setTimeout(() => {
-      addBtn.classList.remove("is-added");
-      addBtn.innerHTML = `${plusIcon}Añadir`;
-    }, 1300);
+    addToCart(item.name, null, item.price);
+    markAdded(addBtn);
+  }
+});
+
+function markAdded(addBtn) {
+  addBtn.classList.add("is-added");
+  addBtn.innerHTML = "✓ Añadida";
+  setTimeout(() => {
+    addBtn.classList.remove("is-added");
+    addBtn.innerHTML = `${plusIcon}Añadir`;
+  }, 1300);
+}
+
+/* ---------- Ventana de adicionales ---------- */
+// Precio del adicional según el tamaño: IND. → columna IND, FAM. y ½ KG → columna FAM, XL → columna XL
+const extraPrice = (row, k) => row[[1, 2, 2, 3][k]];
+const xm = { item: null, k: 0, btn: null };
+
+document.body.insertAdjacentHTML("beforeend", `
+  <div class="xmodal" id="extrasModal" hidden>
+    <div class="xmodal__backdrop" data-xclose></div>
+    <div class="xmodal__panel" role="dialog" aria-modal="true" aria-labelledby="xTitle">
+      <button type="button" class="drawer__close xmodal__x" data-xclose aria-label="Cerrar">✕</button>
+      <p class="eyebrow">Hazla más brutal</p>
+      <h3 class="xmodal__title" id="xTitle"></h3>
+      <p class="xmodal__base" id="xBase"></p>
+      <p class="field-label">Adicionales (opcional)</p>
+      <div class="xgrid" id="xGrid"></div>
+      <button type="button" class="btn-complete" id="xAdd"></button>
+    </div>
+  </div>`);
+const xmodal = $("#extrasModal");
+
+function openExtras(item, k, btn) {
+  Object.assign(xm, { item, k, btn });
+  $("#xTitle").textContent = item.name;
+  $("#xBase").innerHTML = `Tamaño <b>${SIZES[k].label}</b> · ${money(item.prices[k])}`;
+  $("#xGrid").innerHTML = EXTRAS.map((row, i) => `
+    <label class="xopt"><input type="checkbox" value="${i}"><span>${row[0]}</span><b>+${money(extraPrice(row, k))}</b></label>`).join("");
+  xTotal();
+  xmodal.hidden = false;
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $("#xAdd").focus({ preventScroll: true }), 50);
+}
+const xSelected = () => $$("#xGrid input:checked").map((i) => ({ n: EXTRAS[+i.value][0], p: extraPrice(EXTRAS[+i.value], xm.k) }));
+function xTotal() {
+  const total = xm.item.prices[xm.k] + xSelected().reduce((s, e) => s + e.p, 0);
+  $("#xAdd").textContent = `Añadir al pedido · ${money(total)}`;
+}
+function closeExtras() {
+  if (xmodal.hidden) return;
+  xmodal.hidden = true;
+  document.body.style.overflow = drawer.classList.contains("is-open") ? "hidden" : "";
+  if (xm.btn) xm.btn.focus({ preventScroll: true });
+}
+xmodal.addEventListener("change", xTotal);
+xmodal.addEventListener("click", (e) => {
+  if (e.target.closest("[data-xclose]")) return closeExtras();
+  if (e.target.closest("#xAdd")) {
+    addToCart(xm.item.name, SIZES[xm.k].label, xm.item.prices[xm.k], xSelected());
+    closeExtras();
+    markAdded(xm.btn);
   }
 });
 
@@ -279,10 +333,11 @@ function saveCart() {
   try { localStorage.setItem("brutale-cart", JSON.stringify(cart)); } catch {}
 }
 
-function addToCart(name, size, price) {
-  const key = `${name}|${size || ""}`;
+function addToCart(name, size, price, extras = []) {
+  const key = `${name}|${size || ""}|${extras.map((e) => e.n).join("+")}`;
   const line = cart.find((l) => l.key === key);
-  line ? line.qty++ : cart.push({ key, name, size, price, qty: 1 });
+  const total = price == null ? null : Math.round((price + extras.reduce((s, e) => s + e.p, 0)) * 100) / 100;
+  line ? line.qty++ : cart.push({ key, name, size, extras, price: total, qty: 1 });
   saveCart();
   renderCart();
   const btn = $("#cartOpen");
@@ -312,7 +367,7 @@ const stepsHTML = () => `<ol class="steps">${["Tu pedido", "Pago", "Listo"].map(
 
 const linesHTML = (editable) => cart.map((l, i) => `
   <div class="line">
-    <div><span class="line__name">${editable ? "" : `${l.qty}× `}${esc(l.name)}</span>${l.size ? `<span class="line__size">${esc(l.size)}</span>` : ""}</div>
+    <div><span class="line__name">${editable ? "" : `${l.qty}× `}${esc(l.name)}</span>${l.size ? `<span class="line__size">${esc(l.size)}</span>` : ""}${l.extras && l.extras.length ? `<span class="line__extras">+ ${l.extras.map((e) => esc(e.n)).join(", ")}</span>` : ""}</div>
     <span class="line__price">${l.price != null ? money(l.price * l.qty) : "Consultar"}</span>
     ${editable ? `<div class="qty">
       <button type="button" data-dec="${i}" aria-label="Quitar uno">−</button>
@@ -465,7 +520,7 @@ function orderMessage() {
     if (checkout.direccion) L.push(`Dirección: ${checkout.direccion}`);
   }
   L.push("");
-  cart.forEach((l) => L.push(`• ${l.qty}x ${l.name}${l.size ? ` (${l.size})` : ""} — ${l.price != null ? money(l.price * l.qty) : "precio por confirmar"}`));
+  cart.forEach((l) => L.push(`• ${l.qty}x ${l.name}${l.size ? ` (${l.size})` : ""}${l.extras && l.extras.length ? ` + ${l.extras.map((e) => e.n).join(", ")}` : ""} — ${l.price != null ? money(l.price * l.qty) : "precio por confirmar"}`));
   L.push("");
   if (checkout.entrega === "delivery" && checkout.sector) {
     L.push(`Subtotal: ${money(t.sub)}`);
@@ -570,7 +625,12 @@ function closeCart() {
 $("#cartOpen").addEventListener("click", openCart);
 $("#cartClose").addEventListener("click", closeCart);
 overlay.addEventListener("click", closeCart);
-document.addEventListener("keydown", (e) => e.key === "Escape" && (closeCart(), closeNav()));
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!xmodal.hidden) return closeExtras();
+  closeCart();
+  closeNav();
+});
 
 /* ---------- Toast ---------- */
 let toastTimer;
