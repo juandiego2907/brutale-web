@@ -1,5 +1,11 @@
-# Material original sin usar en la web
+# Material original del cliente (no se publica)
 fotos y videos/
+
+# Herramientas locales y datos privados del servidor
+.claude/
+api/privado/
+__pycache__/
+*.log
 
 # Sistema
 .DS_Store

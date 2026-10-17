@@ -1,0 +1,14 @@
+# Brutale Pizza · carpeta de la API
+Options -Indexes
+
+# Nada de caché para las respuestas de la API
+<IfModule mod_headers.c>
+  Header set Cache-Control "no-store"
+  Header set X-Robots-Tag "noindex, nofollow"
+</IfModule>
+
+# Archivos internos y carpeta privada: nunca accesibles desde internet
+<FilesMatch "^(_comun\.php|.*\.log|.*\.json)$">
+  Require all denied
+</FilesMatch>
+RedirectMatch 404 ^/(.*/)?api/privado(/.*)?$
