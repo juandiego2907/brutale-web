@@ -163,7 +163,7 @@
     (CFG.delivery || []).forEach(function (g, gi) {
       html += '<optgroup label="' + esc(g.zona) + '">';
       (g.sectores || []).forEach(function (s, si) {
-        html += '<option value="' + gi + "." + si + '">' + esc(s[0]) + " · " + usd(typeof s[1] === "number" ? s[1] : 0) + "</option>";
+        html += '<option value="' + gi + "." + si + '">' + esc(s[0]) + " · " + (typeof s[1] === "number" ? usd(s[1]) : "costo por confirmar") + "</option>";
       });
       html += "</optgroup>";
     });
@@ -173,7 +173,7 @@
     if (!value) return null;
     var p = String(value).split("."), g = (CFG.delivery || [])[+p[0]], s = g && g.sectores && g.sectores[+p[1]];
     if (!s) return null;
-    return { nombre: s[0], zona: g.zona, costo: typeof s[1] === "number" ? s[1] : 0 };
+    return { nombre: s[0], zona: g.zona, costo: typeof s[1] === "number" ? s[1] : 0, sinCosto: typeof s[1] !== "number" };
   }
 
   /* ---------------- interfaz del paso de pago ---------------- */
@@ -261,12 +261,14 @@
     var r = st.root; if (!r) return;
     var m = method(st.method);
     var d = st.delivery;
-    var total = st.subtotal + (d && d.costo ? d.costo : 0);
+    var cj = st.cajas || { items: [], total: 0 };
+    var total = st.subtotal + cj.total + (d && d.costo ? d.costo : 0);
     st.totalUsd = total;
 
     // Resumen
     var sum = '<div><span>Subtotal</span><b>' + usd(st.subtotal) + "</b></div>";
-    if (d) sum += '<div><span>Delivery · ' + esc(d.nombre) + "</span><b>" + usd(d.costo || 0) + "</b></div>";
+    cj.items.forEach(function (c) { sum += "<div><span>" + c.qty + " × " + esc(c.nombre) + "</span><b>" + usd(c.precio * c.qty) + "</b></div>"; });
+    if (d) sum += '<div><span>Delivery · ' + esc(d.nombre) + "</span><b>" + (d.sinCosto ? "Por confirmar" : usd(d.costo || 0)) + "</b></div>";
     else if (st.entrega === "Delivery") sum += "<div><span>Entrega</span><b>Delivery · costo por configurar</b></div>";   // sin sectores cargados en config.js
     else sum += '<div><span>Entrega</span><b>Retiro en ' + esc(CFG.lugarRetiro || "el local") + "</b></div>";
     sum += '<div class="pay__total"><span>Total</span><b>' + usd(total) + "</b></div>";
@@ -358,6 +360,7 @@
     enter: function (opts) {
       st.subtotal = opts.subtotal;
       st.delivery = opts.delivery;
+      st.cajas = opts.cajas || null;
       st.entrega = opts.entrega || "Delivery";
       if (st.root !== opts.root) { st.root = opts.root; build(opts.root); }
       paint();

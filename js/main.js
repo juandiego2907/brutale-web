@@ -205,7 +205,33 @@
     if (!f || entrega() !== "Delivery" || !pay || !pay.hasSectors()) return null;
     return pay.sectorInfo(f.sector.value);
   }
-  function grand() { var d = deliveryChoice(); return cart.length ? subtotal() + (d && d.costo ? d.costo : 0) : 0; }
+  /* Cajas: con Delivery cada pizza suma la caja de su tamaño (CFG.cajasDelivery). Con Retiro no se cobran. */
+  function cajas() {
+    var out = { items: [], total: 0 }, by = {}, tabla = CFG.cajasDelivery || [];
+    if (entrega() !== "Delivery") return out;
+    cart.forEach(function (l) {
+      var p = ITEMS[l.id], c = tabla[l.size];
+      if (!p || p.unico || !c || typeof c[1] !== "number") return;
+      if (!by[c[0]]) { by[c[0]] = { nombre: c[0], precio: c[1], qty: 0 }; out.items.push(by[c[0]]); }
+      by[c[0]].qty += l.qty;
+      out.total += c[1] * l.qty;
+    });
+    out.total = Math.round(out.total * 100) / 100;
+    return out;
+  }
+  // Costo del sector y nota de entrega (con las cajas que ya van en el total); se repinta en cada render()
+  function paintDelivery() {
+    var box = $("[data-delivery-cost]"), noteEl = $("[data-delivery-note]");
+    if (!box || !noteEl || !els.order) return;
+    var isDelivery = entrega() === "Delivery", info = deliveryChoice(), cj = cajas();
+    box.hidden = !info;
+    if (info) box.innerHTML = "<span>Delivery a " + esc(info.nombre) + "</span><b>" + (info.sinCosto ? "Por confirmar" : money(info.costo || 0)) + "</b>";
+    var cajaTxt = cj.items.length ? " Las cajas (" + cj.items.map(function (c) { return c.qty + " × " + c.nombre.toLowerCase(); }).join(", ") + ": " + money(cj.total) + ") ya están en el total." : "";
+    noteEl.textContent = isDelivery
+      ? (info ? (info.sinCosto ? "El costo del delivery a este sector está por confirmar." : "El delivery se suma al total que pagas en el siguiente paso.") : "Elige tu sector para sumar el delivery al total.") + cajaTxt
+      : "Retiras tu pedido en " + (CFG.lugarRetiro || "el local") + ". Te avisamos por WhatsApp cuando esté listo.";
+  }
+  function grand() { var d = deliveryChoice(); return cart.length ? subtotal() + cajas().total + (d && d.costo ? d.costo : 0) : 0; }
 
   function render(bumped) {
     var n = count(), s = subtotal(), g = grand();
@@ -223,6 +249,7 @@
     els.cart.classList.toggle("is-empty", n === 0);
     els.sub.textContent = n ? n + " " + (n === 1 ? UNIT[0] : UNIT[1]) + " en tu pedido" : "Todavía no has elegido nada";
     els.lines.innerHTML = cart.map(lineHTML).join("");
+    paintDelivery();
 
     var dock = $("[data-dock]");
     if (dock) {
@@ -261,14 +288,14 @@
       return fail(f.direccion, "Escribe la dirección con un punto de referencia.");
     }
     if (!P()) { els.error.textContent = "No pudimos cargar el paso de pago. Recarga la página e inténtalo de nuevo."; return; }
-    P().enter({ root: $("[data-pay]"), subtotal: subtotal(), delivery: deliveryChoice(), entrega: entrega() });
+    P().enter({ root: $("[data-pay]"), subtotal: subtotal(), delivery: deliveryChoice(), entrega: entrega(), cajas: cajas() });
     setStep("pago");
   }
 
   /* ---------------- Mensaje de WhatsApp (el pedido llega YA PAGADO) ---------------- */
   function buildMessage(pay, proofUrl) {
-    var f = els.order, out = [], d = deliveryChoice(), s = subtotal();
-    var cost = d ? (d.costo || 0) : 0, total = s + cost;
+    var f = els.order, out = [], d = deliveryChoice(), s = subtotal(), cj = cajas();
+    var cost = d ? (d.costo || 0) : 0, total = s + cj.total + cost;
     out.push(TX.saludo || "¡Hola, *" + (CFG.nombre || "") + "*!");
     out.push(TX.intro || "Hice este pedido en la web y ya está *pagado*:");
     out.push("");
@@ -285,7 +312,8 @@
     });
     out.push("");
     out.push("Subtotal: " + money(s));
-    if (d) out.push("🛵 Delivery (" + d.nombre + "): " + money(cost));
+    cj.items.forEach(function (c) { out.push("📦 " + c.qty + " × " + c.nombre + ": " + money(c.precio * c.qty)); });
+    if (d) out.push("🛵 Delivery (" + d.nombre + "): " + (d.sinCosto ? "por confirmar" : money(cost)));
     out.push("💰 *TOTAL: " + money(total) + "*");
     out.push("");
     out.push("✅ *PAGO REALIZADO: " + pay.metodo + "*");
@@ -494,14 +522,7 @@
       var isDelivery = entrega() === "Delivery";
       $("[data-address-field]").hidden = !isDelivery;
       $("[data-sector-field]").hidden = !isDelivery || !P() || !P().hasSectors();
-      var info = deliveryChoice(), box = $("[data-delivery-cost]");
-      box.hidden = !info;
-      if (info) box.innerHTML = "<span>Delivery a " + esc(info.nombre) + "</span><b>" + money(info.costo || 0) + "</b>";
-      var note = isDelivery
-        ? (info ? "El delivery se suma al total que pagas en el siguiente paso." : "Elige tu sector para sumar el delivery al total.")
-        : "Retiras tu pedido en " + (CFG.lugarRetiro || "el local") + ". Te avisamos por WhatsApp cuando esté listo.";
-      $("[data-delivery-note]").textContent = note;
-      render(false);
+      render(false);   // render() repinta el costo del sector y la nota de cajas (paintDelivery)
     }
     f.addEventListener("input", function (e) {
       var d = {};

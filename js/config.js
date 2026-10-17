@@ -54,12 +54,90 @@ window.SITE_CONFIG = {
     "transferencia": { "banco": "", "titular": "", "cuenta": "", "cedula": "" }
   },
 
-  /* ---------- DELIVERY POR SECTOR ----------
-     Cada sector es [nombre, costo en dólares]. Ejemplo:
-       { "zona": "Centro", "sectores": [["Casco central", 1.5], ["Las Acacias", 2]] }
-     PENDIENTE: el local no ha dado sus zonas ni costos. Con la lista vacía solo se pide la dirección
-     y el delivery NO se suma al total que paga el cliente. */
-  "delivery": [],
+  /* ---------- DELIVERY POR SECTOR (Mérida) ----------
+     Cada sector es [nombre, costo en dólares]. Escribe el costo como número (1.5 = $1,50).
+     null = costo todavía sin cargar: en la web sale "por confirmar" y NO se suma al total que paga el cliente.
+     PENDIENTE: cargar el costo de cada sector antes de publicar.
+     Puedes añadir, quitar o renombrar sectores libremente. */
+  "delivery": [
+    { "zona": "Mérida · Centro", "sectores": [
+      ["Centro (casco central)", null],
+      ["Belén", null],
+      ["El Llano", null],
+      ["Milla", null],
+      ["La Hoyada de Milla", null],
+      ["Glorias Patrias", null],
+      ["El Espejo", null],
+      ["Pueblo Nuevo", null],
+      ["Av. Tatuy", null],
+      ["Av. Urdaneta", null],
+      ["Av. 16 de Septiembre", null]
+    ]},
+    { "zona": "Mérida · Av. Las Américas", "sectores": [
+      ["Av. Las Américas", null],
+      ["Santa Juana", null],
+      ["Pie del Llano", null],
+      ["Campo de Oro", null],
+      ["Urb. Humboldt", null],
+      ["Santa Mónica", null],
+      ["Santa Bárbara", null],
+      ["Parque Albarregas", null]
+    ]},
+    { "zona": "Mérida · Norte", "sectores": [
+      ["Santa María Norte", null],
+      ["Santa María Sur", null],
+      ["Av. Los Próceres", null],
+      ["La Pedregosa Alta", null],
+      ["La Pedregosa Media", null],
+      ["La Pedregosa Sur", null],
+      ["La Otra Banda", null],
+      ["Andrés Eloy Blanco", null],
+      ["Vega de La Isla", null],
+      ["Pasaje La Isla", null],
+      ["Santa Rosa", null],
+      ["Los Chorros de Milla", null],
+      ["La Hechicera", null],
+      ["El Valle", null],
+      ["La Culata", null]
+    ]},
+    { "zona": "Mérida · Sur", "sectores": [
+      ["Av. Andrés Bello", null],
+      ["Las Tapias", null],
+      ["Alto Chama", null],
+      ["El Chama", null],
+      ["Chamita", null],
+      ["San Jacinto", null],
+      ["Belensate", null],
+      ["La Parroquia", null],
+      ["Los Curos", null],
+      ["El Arenal", null]
+    ]},
+    { "zona": "Ejido (Campo Elías)", "sectores": [
+      ["Ejido · Centro", null],
+      ["El Manzano", null],
+      ["Montalbán", null],
+      ["La Mesa de Ejido", null],
+      ["El Carrizal", null],
+      ["Aguas Calientes", null]
+    ]},
+    { "zona": "Tabay (Santos Marquina)", "sectores": [
+      ["Tabay · Centro", null],
+      ["Mucunután", null],
+      ["La Mucuy", null]
+    ]}
+  ],
+
+  /* ---------- CAJAS EN DELIVERY ----------
+     Con Delivery, cada pizza suma su caja según el tamaño (precios de la carta), en el orden de "tamanos":
+     [ Individual, Familiar, Familiar ½ kg de queso, XL ]. Con Retiro no se cobran.
+     Solo aplica a pizzas (calzone, postre y bebidas no llevan caja).
+     PENDIENTE: confirmar que la XL y la de ½ kg van en caja familiar. */
+  "cajasDelivery": [
+    ["Caja individual", 0.9],
+    ["Caja familiar", 1.6],
+    ["Caja familiar", 1.6],
+    ["Caja familiar", 1.6]
+  ],
 
   /* ---------- LOS PRODUCTOS ----------
      grupo: "autor" | "clasicas" | "calzone" | "postres" | "bebidas"   ·   sinCarne: true para el filtro "Sin carne"
@@ -117,9 +195,8 @@ window.SITE_CONFIG = {
     { "id": "salsa",       "nombre": "Salsa",                "precios": [1.15, 2.5, 2.5, 6.2] }
   ],
 
-  /* ---------- ENVASES (informativo) ----------
-     Aparecen en el menú como información. PENDIENTE: que el local diga si se cobran en cada pedido
-     (hoy NO se suman al total). */
+  /* ---------- ENVASES (lista que se muestra en el menú) ----------
+     Las cajas se cobran solas en Delivery (ver "cajasDelivery"). Los platos de anime solo se muestran. */
   "envases": [
     ["Caja familiar", 1.6],
     ["Caja individual", 0.9],
