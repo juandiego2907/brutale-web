@@ -25,6 +25,7 @@
 
   var ICO_MINUS = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>';
   var ICO_PLUS = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+  var ICO_BOX = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></svg>';
   var ICO_TRASH = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>';
   var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -182,8 +183,12 @@
   function lineHTML(l) {
     var u = unit(l), b = bsText(u * l.qty);
     var small = [sizeText(l), money(u) + (l.qty > 1 ? " c/u" : "")];
+    var caja = cajaDe(l);
     var extra = (l.extras.length ? '<span class="line__opt">+ ' + esc(extrasText(l)) + "</span>" : "") +
-      (l.note ? '<span class="line__note">“' + esc(l.note) + "”</span>" : "");
+      (l.note ? '<span class="line__note">“' + esc(l.note) + "”</span>" : "") +
+      // Caja del delivery (se suma aparte en el total)
+      (caja ? '<span class="line__box">' + ICO_BOX + "<span>+ " + esc(caja[0]) + " " + money(caja[1]) +
+        (l.qty > 1 ? " c/u = " + money(caja[1] * l.qty) : "") + "</span></span>" : "");
     return '<li class="line" data-line="' + esc(l.key) + '">' +
       '<span class="line__size" aria-hidden="true" title="' + esc(SIZES[l.size]) + '">' + esc(ITEMS[l.id].unico ? "C" : SIZES[l.size].charAt(0)) + "</span>" +
       '<div class="line__name"><p>' + esc(l.name) + "</p><small>" + esc(small.join(" · ")) + "</small>" + extra + "</div>" +
@@ -206,12 +211,16 @@
     return pay.sectorInfo(f.sector.value);
   }
   /* Cajas: con Delivery cada pizza suma la caja de su tamaño (CFG.cajasDelivery). Con Retiro no se cobran. */
+  function cajaDe(l) {
+    var p = ITEMS[l.id], c = (CFG.cajasDelivery || [])[l.size];
+    if (entrega() !== "Delivery" || !p || p.unico || !c || typeof c[1] !== "number") return null;
+    return c;
+  }
   function cajas() {
-    var out = { items: [], total: 0 }, by = {}, tabla = CFG.cajasDelivery || [];
-    if (entrega() !== "Delivery") return out;
+    var out = { items: [], total: 0 }, by = {};
     cart.forEach(function (l) {
-      var p = ITEMS[l.id], c = tabla[l.size];
-      if (!p || p.unico || !c || typeof c[1] !== "number") return;
+      var c = cajaDe(l);
+      if (!c) return;
       if (!by[c[0]]) { by[c[0]] = { nombre: c[0], precio: c[1], qty: 0 }; out.items.push(by[c[0]]); }
       by[c[0]].qty += l.qty;
       out.total += c[1] * l.qty;
