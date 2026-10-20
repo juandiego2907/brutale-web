@@ -29,6 +29,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: var(--nav-h); overflow-x: hidden; }
+/* Sin deslizamiento lateral: "clip" recorta lo que sobresale sin convertir al body en contenedor de scroll
+   (con "hidden" en html y body a la vez, la barra de filtros del menú dejaba de acompañar el scroll). */
+@supports (overflow-x: clip) { html, body { overflow-x: clip; } }
 body {
   margin: 0;
   background: var(--bg);
@@ -37,7 +40,6 @@ body {
   font-size: 16px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
 }
 /* Textura de ruido sutil para el look industrial */
 body::before {
@@ -409,6 +411,17 @@ svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2
 .filters button.is-on { background: var(--red); color: var(--white); }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 26px; }
+
+/* Títulos de sección dentro del menú (solo en "Todo") */
+.menu__group { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; margin: 26px 0 -6px; font-family: var(--font-display); font-weight: 400; font-size: clamp(1.7rem, 3.4vw, 2.4rem); text-transform: uppercase; letter-spacing: 0.02em; color: var(--white); scroll-margin-top: calc(var(--nav-h) + 80px); }
+.menu__group:first-child { margin-top: 0; }
+.menu__group span { display: inline-flex; align-items: center; gap: 12px; white-space: nowrap; }
+.menu__group span::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--red); box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.2); }
+.menu__group::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-2), transparent); }
+
+/* Bebidas: tarjeta compacta, sin foto */
+.pz--compact .pz__body { padding: 18px 20px 20px; border-left: 3px solid var(--red); }
+.pz--compact .pz__name { font-size: 1.35rem; }
 
 /* Tarjeta de producto */
 .pz {

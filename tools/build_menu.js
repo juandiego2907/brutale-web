@@ -40,6 +40,9 @@ const money = (n) => "$" + n.toFixed(2).replace(".", ",");
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ICO_PLUS = '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
 const SIN_LLEVA = new Set(["postres", "bebidas"]);
+const SIN_FOTO = new Set(["bebidas"]);   // las bebidas van en tarjeta compacta, sin foto
+// Títulos de cada sección del menú (se ven en "Todo"; mismo texto que los filtros)
+const SECCIONES = { autor: "Pizzas de Autor", clasicas: "Clásicas", calzone: "Calzone", postres: "Postres", bebidas: "Bebidas" };
 
 function card(p, cfg) {
   const sizes = cfg.tamanos, short = cfg.medidas;
@@ -50,12 +53,15 @@ function card(p, cfg) {
   const tags = [p.grupo].concat(p.sinCarne ? ["sincarne"] : []);
   const custom = !p.unico && !noPrice;
   const o = [];
-  o.push(`<article class="pz rv${p.destacada ? " pz--star" : ""}" data-item data-id="${esc(p.id)}" data-name="${esc(p.nombre)}" data-tags="${tags.join(" ")}" data-size="${first}"${custom ? " data-custom" : ""}>`);
-  o.push('<div class="pz__art">');
-  o.push(`<img class="pz__photo" src="${esc(p.img)}" alt="${esc(p.nombre)}" width="700" height="525" loading="lazy" decoding="async">`);
-  if (p.destacada) o.push('<span class="pz__badge">La de la casa</span>');
-  o.push(p.unico ? "" : `<span class="pz__cm" data-cm>${esc(short[first])}</span>`);
-  o.push("</div>");
+  const compact = SIN_FOTO.has(p.grupo);
+  o.push(`<article class="pz rv${compact ? " pz--compact" : ""}${p.destacada ? " pz--star" : ""}" data-item data-id="${esc(p.id)}" data-name="${esc(p.nombre)}" data-tags="${tags.join(" ")}" data-size="${first}"${custom ? " data-custom" : ""}>`);
+  if (!compact) {
+    o.push('<div class="pz__art">');
+    o.push(`<img class="pz__photo" src="${esc(p.img)}" alt="${esc(p.nombre)}" width="700" height="525" loading="lazy" decoding="async">`);
+    if (p.destacada) o.push('<span class="pz__badge">La de la casa</span>');
+    o.push(p.unico ? "" : `<span class="pz__cm" data-cm>${esc(short[first])}</span>`);
+    o.push("</div>");
+  }
   o.push('<div class="pz__body">');
   o.push(`<h3 class="pz__name">${esc(p.nombre)}</h3>`);
   if (p.chiste) o.push(`<p class="pz__joke">${esc(p.chiste)}</p>`);
@@ -95,7 +101,17 @@ function replaceBlock(src, name, html) {
 
 const cfg = readConfig();
 let src = fs.readFileSync(INDEX, "utf8");
-src = replaceBlock(src, "MENU", cfg.productos.map((p) => card(p, cfg)).join("\n"));
+// Antes del primer producto de cada grupo va el título de su sección (solo visible en "Todo")
+let lastGroup = "";
+const menuHTML = cfg.productos.map((p) => {
+  let head = "";
+  if (p.grupo !== lastGroup) {
+    lastGroup = p.grupo;
+    head = `<h3 class="menu__group" data-group-head data-tags="${esc(p.grupo)}"><span>${esc(SECCIONES[p.grupo] || p.grupo)}</span></h3>\n`;
+  }
+  return head + card(p, cfg);
+}).join("\n");
+src = replaceBlock(src, "MENU", menuHTML);
 src = replaceBlock(src, "ENVASES", envases(cfg));
 fs.writeFileSync(INDEX, src);
 console.log(`OK · ${cfg.productos.length} productos y ${cfg.adicionales.length} adicionales escritos en index.html`);

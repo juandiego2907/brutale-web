@@ -166,12 +166,12 @@ window.SITE_CONFIG = {
 
     { "id": "postre",           "nombre": "Postre",            "grupo": "postres",  "precios": [2.3, null, null, null],     "unico": true, "chiste": "Para cerrar con broche dulce. Pregunta por el del día.", "img": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=700&q=70" },
 
-    { "id": "refresco-botella", "nombre": "Refresco de botella", "grupo": "bebidas", "precios": [1.1, null, null, null],   "unico": true, "chiste": "Bien frío.", "img": "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?auto=format&fit=crop&w=700&q=70" },
-    { "id": "refresco-15",      "nombre": "Refresco 1,5 L",    "grupo": "bebidas",  "precios": [3.6, null, null, null],     "unico": true, "chiste": "Para acompañar la familiar.", "img": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=700&q=70" },
-    { "id": "refresco-2",       "nombre": "Refresco 2 L",      "grupo": "bebidas",  "precios": [null, null, null, null],    "unico": true, "chiste": "Para la manada completa.", "img": "https://images.unsplash.com/photo-1554866585-cd94860890b7?auto=format&fit=crop&w=700&q=70" },
-    { "id": "nestea",           "nombre": "Nestea",            "grupo": "bebidas",  "precios": [1.5, null, null, null],     "unico": true, "chiste": "Té frío.", "img": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=700&q=70" },
-    { "id": "yukery",           "nombre": "Yukery",            "grupo": "bebidas",  "precios": [null, null, null, null],    "unico": true, "chiste": "Jugo.", "img": "https://images.unsplash.com/photo-1600271886742-f049cd451bba?auto=format&fit=crop&w=700&q=70" },
-    { "id": "agua",             "nombre": "Agua mineral",      "grupo": "bebidas",  "precios": [1.5, null, null, null],     "unico": true, "chiste": "Siempre fría.", "img": "https://images.unsplash.com/photo-1523362628745-0c100150b504?auto=format&fit=crop&w=700&q=70" }
+    { "id": "refresco-botella", "nombre": "Refresco de botella", "grupo": "bebidas", "precios": [1.1, null, null, null],   "unico": true, "chiste": "Bien frío." },
+    { "id": "refresco-15",      "nombre": "Refresco 1,5 L",    "grupo": "bebidas",  "precios": [3.6, null, null, null],     "unico": true, "chiste": "Para acompañar la familiar." },
+    { "id": "refresco-2",       "nombre": "Refresco 2 L",      "grupo": "bebidas",  "precios": [null, null, null, null],    "unico": true, "chiste": "Para la manada completa." },
+    { "id": "nestea",           "nombre": "Nestea",            "grupo": "bebidas",  "precios": [1.5, null, null, null],     "unico": true, "chiste": "Té frío." },
+    { "id": "yukery",           "nombre": "Yukery",            "grupo": "bebidas",  "precios": [null, null, null, null],    "unico": true, "chiste": "Jugo." },
+    { "id": "agua",             "nombre": "Agua mineral",      "grupo": "bebidas",  "precios": [1.5, null, null, null],     "unico": true, "chiste": "Siempre fría." }
   ],
 
   /* ---------- ADICIONALES (solo pizzas) ----------

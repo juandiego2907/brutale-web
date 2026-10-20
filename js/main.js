@@ -769,6 +769,8 @@
         c.hidden = v !== "todas" && tags.indexOf(v) < 0;
         if (!c.hidden) c.classList.add("is-in");
       });
+      // Los títulos de sección solo se ven en "Todo"
+      $$("[data-group-head]").forEach(function (h) { h.hidden = v !== "todas"; if (!h.hidden) h.classList.add("is-in"); });
       var navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--nav-h"), 10) || 68;
       var top = $("[data-menu]").getBoundingClientRect().top + window.scrollY - bar.offsetHeight - navH - 12;
       if (window.scrollY > top) window.scrollTo({ top: top, behavior: reduced ? "auto" : "smooth" });
